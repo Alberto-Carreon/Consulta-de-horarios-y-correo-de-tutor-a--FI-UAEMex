@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="es" dir="ltr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Consulta de datos de Contacto de Tutor o Tutora</title>
+  <style>
+    :root {
+      --bg:#0b1220; --card:#121a2b; --muted:#7f8ba3; --text:#e8eefc; --accent:#4da3ff; --accent-2:#20c997; --danger:#ff6b6b; --shadow:0 8px 30px rgba(0,0,0,.35); --radius:18px;
+    }
+    html, body { height:100%; }
+    body { margin:0; background: radial-gradient(1200px 800px at 20% 0%, #0f1830, #091020 70%), var(--bg); color:var(--text); font:16px/1.45 system-ui,-apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, Helvetica, Arial; display:grid; place-items:center; padding:32px 16px; }
+    .container { width:min(880px, 100%); }
+    .title { font-weight:800; letter-spacing:.2px; margin:0 0 10px; font-size:clamp(22px, 2.2vw + 12px, 34px); }
+    .subtitle { margin:0 0 18px; color:var(--muted); }
+    .card { background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01)); border:1px solid rgba(255,255,255,.08); border-radius:var(--radius); box-shadow:var(--shadow); }
+    .card-body { padding:22px; }
+    .field { display:grid; gap:10px; margin:6px 0 16px; }
+    label { font-weight:600; }
+    input[type="text"] { background:#0b1324; border:1px solid rgba(255,255,255,.12); color:var(--text); border-radius:12px; padding:12px 14px; outline:none; transition:border .15s ease; }
+    input[type="text"]:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(77,163,255,.15); }
+    .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    button { cursor:pointer; border:none; border-radius:12px; padding:12px 16px; font-weight:700; }
+    .btn { background:var(--accent); color:#061121; }
+    .btn.secondary { background:#1b2236; color:var(--text); border:1px solid rgba(255,255,255,.12); }
+    .btn.primary { background:var(--accent); color:#061121; }
+    .btn-lg { display:inline-block; width:100%; text-align:center; padding:16px 18px; border-radius:14px; font-size:18px; font-weight:800; box-shadow: var(--shadow); text-decoration:none; }
+    .cta { margin: 12px 0 6px; }
+    .hint { color:var(--muted); font-size:14px; }
+    .hint-strong { color:var(--text); font-size:14px; font-weight:700; }
+    .result { display:none; margin-top:8px; }
+    .result.visible { display:block; animation:fade .25s ease-in; }
+    .name { font-size:20px; font-weight:800; margin-top:8px; }
+    .pill { display:inline-block; padding:6px 10px; border-radius:999px; background:rgba(77,163,255,.12); color:var(--accent); font-weight:700; font-size:12px; border:1px solid rgba(77,163,255,.3); }
+    .kvs { display:grid; grid-template-columns:150px 1fr; gap:10px 14px; margin:14px 0; }
+    .k { color:var(--muted); }
+    .kvs .v a { color:var(--accent); text-decoration:none; }
+    .kvs .v a:hover { text-decoration:underline; }
+    .divider { height:1px; background:linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.1), rgba(255,255,255,0)); margin:14px 0; }
+    .err { color:var(--danger); font-weight:700; }
+    .ok { color:var(--accent-2); font-weight:700; }
+    .foot { margin-top:12px; color:var(--muted); font-size:12px; }
+    .debug { display:none; margin-top:16px; }
+    .debug.visible { display:block; }
+    pre { background:#0b1324; border:1px solid rgba(255,255,255,.12); border-radius:12px; padding:12px; overflow:auto; }
+    @keyframes fade { from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
+  </style>
+</head>
+<body>
+  <main class="container" role="main">
+    <h1 class="title">Consulta de datos de Contacto de Tutor o Tutora</h1>
+    <p class="subtitle">Ingresa tu <strong>número de cuenta</strong> (7 dígitos) para conocer el <em>nombre de tu tutor(a)</em>, su <em>horario de atención</em>, el <em>correo institucional</em> y el acceso al chat en <strong>MS Teams</strong>.</p>
+
+    <section class="card" aria-labelledby="lbl-consulta">
+      <div class="card-body">
+        <h2 id="lbl-consulta" style="margin:0 0 10px;">Consulta</h2>
+        <form id="form" novalidate>
+          <div class="field">
+            <label for="cuenta">Número de cuenta (7 dígitos)</label>
+            <input id="cuenta" name="cuenta" type="text" inputmode="numeric" autocomplete="off" placeholder="Ej. 2021001" aria-describedby="cuenta-hint" maxlength="7" required />
+            <div id="cuenta-hint" class="hint">Debe contener exactamente <strong>7 dígitos numéricos</strong>. Se ignoran caracteres no numéricos.</div>
+          </div>
+          <div class="row">
+            <button type="submit" class="btn" aria-label="Consultar tutor">Consultar</button>
+            <button type="button" id="btn-limpiar" class="btn secondary" aria-label="Limpiar">Limpiar</button>
+          </div>
+        </form>
+
+        <div id="estado" class="hint" aria-live="polite"></div>
+        <div id="resultado" class="result" aria-live="polite"></div>
+
+        <!-- Panel de diagnóstico (solo visible con #debug en la URL) -->
+        <div id="debug" class="debug" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <p class="foot">Aviso: Para cambios o incidencias, contacta a la Coordinación de Tutoría Académica de la Facultad de Ingeniería. WhatsApp: <a href="https://wa.me/527228959749" target="_blank" rel="noopener">7228959749</a>.</p>
+  </main>
+
+  <!-- OPCIÓN embebida: si pegas aquí el JSON en #tutores-data, NO se hará fetch -->
+  <!-- <script id="tutores-data" type="application/json">[]</script> -->
+
+  <script>
+    // =====================
+    //  CONFIGURACIÓN Y RUTAS
+    // =====================
+    const DATA_URL_DEFAULT = './tutores.json'; // Usada si no hay JSON embebido y no se pasa ?csv=
+
+    function getParam(name){
+      try{ return new URLSearchParams(location.search).get(name); }catch{ return null; }
+    }
+
+    // =====================
+    //  UTILIDADES
+    // =====================
+    const qs = (s, el=document) => el.querySelector(s);
+    const elForm   = qs('#form');
+    const elCuenta = qs('#cuenta');
+    const elResult = qs('#resultado');
+    const elEstado = qs('#estado');
+    const elDebug  = qs('#debug');
+
+    let INDEX = null;           // Map por número de cuenta normalizado
+    let DUPLICATES = new Set(); // Cuentas duplicadas detectadas
+
+    function normCuenta(raw){ return String(raw||'').replace(/\D+/g,''); }
+    function isValidCuenta(raw){ return /^\d{7}$/.test(normCuenta(raw)); }
+    function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c])); }
+    function teamsLink(email){ const enc = encodeURIComponent(String(email||'').trim()); return enc?`https://teams.microsoft.com/l/chat/0/0?users=${enc}`:null; }
+
+    function buildIndex(rows){
+      const map = new Map();
+      for(const r of rows||[]){
+        if(!r) continue;
+        const cuenta = normCuenta(r.cuenta);
+        const tutor  = (r.tutor||'').trim();
+        const horario= (r.horario||'').trim();
+        const correo = (r.correo||'').trim();
+        if(!/^\d{7}$/.test(cuenta) || !tutor || !correo) continue;
+        if(!map.has(cuenta)) map.set(cuenta, { cuenta, tutor, horario, correo });
+      }
+      return map;
+    }
+
+    function duplicatesSet(rows){
+      const seen = new Set();
+      const dups = new Set();
+      for(const r of rows||[]){
+        const c = normCuenta(r?.cuenta);
+        if(!/^\d{7}$/.test(c)) continue;
+        if(seen.has(c)) dups.add(c); else seen.add(c);
+      }
+      return dups;
+    }
+
+    function renderResult(type, payload){
+      elResult.className = 'result visible';
+      if(type === 'invalid'){
+        elResult.innerHTML = `<p class="err" role="alert">El número de cuenta debe tener <strong>7 dígitos numéricos</strong>. Verifica e inténtalo de nuevo.</p>`;
+        return;
+      }
+      if(type === 'notfound'){
+        elResult.innerHTML = `<p class="err" role="alert">No se encontró el número de cuenta. Verifica que esté correcto o contacta a la Coordinación de Tutoría Académica de la Facultad de Ingeniería. WhatsApp: <a href="https://wa.me/527228959749" target="_blank" rel="noopener">7228959749</a>.</p>`;
+        return;
+      }
+      if(type === 'duplicate'){
+        elResult.innerHTML = `<p class="err" role="alert">Se detectaron <strong>registros duplicados</strong> para este número de cuenta. Por favor, contacta a la Coordinación de Tutoría Académica de la Facultad de Ingeniería. WhatsApp: <a href="https://wa.me/527228959749" target="_blank" rel="noopener">7228959749</a>.</p>`;
+        return;
+      }
+
+      // OK
+      const { tutor, horario, correo } = payload;
+      const teams = teamsLink(correo);
+      const horarioText = horario ? escapeHtml(horario) : `No hay horario registrado. Por favor, comunícate por el <strong>chat de MS TEAMS</strong> para acordar tu atención.`;
+      const ctaBtn = teams ? `<div class="cta"><a class="btn-lg btn primary" href="${teams}" target="_blank" rel="noopener">Abrir chat en MS Teams</a></div>` : '';
+
+      elResult.innerHTML = `
+        <div class="pill" aria-hidden="true">Tutor asignado</div>
+        <div class="name">${escapeHtml(tutor)}</div>
+        ${ctaBtn}
+        <div class="divider"></div>
+        <div class="kvs">
+          <div class="k">Horario</div>
+          <div class="v">${horarioText}</div>
+          <div class="k">Correo</div>
+          <div class="v"><a href="mailto:${encodeURI(correo)}">${escapeHtml(correo)}</a></div>
+          <div class="k">MS Teams</div>
+          <div class="v">${teams ? `<a href="${teams}" target="_blank" rel="noopener">Abrir chat</a>` : '—'}</div>
+        </div>
+        <p class="hint-strong">Medio de contacto recomendado: <strong>chat de MS TEAMS</strong> (respuesta más rápida). El <em>correo institucional</em> está disponible, pero puede ser <em>más tardado</em>.</p>
+        <p class="hint">Si tienes problemas, contacta a la Coordinación de Tutoría Académica de la Facultad de Ingeniería. WhatsApp: <a href="https://wa.me/527228959749" target="_blank" rel="noopener">7228959749</a>.</p>`;
+    }
+
+    // =====================
+    //  CARGA DE DATOS TOLERANTE (JSON o CSV)
+    // =====================
+    function parseJSONSafe(text){
+      if(typeof text !== 'string') return null;
+      try{ return JSON.parse(text.replace(/^\uFEFF/, '')); }catch{ return null; }
+    }
+
+    async function fetchText(url){
+      try{ const res = await fetch(url, { cache: 'no-store' }); if(!res.ok) return null; return await res.text(); }catch{ return null; }
+    }
+
+    function csvToRows(csv){
+      // Parser sencillo compatible con comillas dobles y comas
+      const rows = []; if(!csv) return rows;
+      const lines = csv.replace(/\r\n?/g,'\n').split('\n').filter(l=>l.trim().length>0);
+      if(lines.length===0) return rows;
+      const parseLine = (line) => {
+        const out=[]; let cur=''; let inQ=false; for(let i=0;i<line.length;i++){
+          const ch=line[i], next=line[i+1];
+          if(ch==='"'){
+            if(inQ && next==='"'){ cur+='"'; i++; }
+            else { inQ=!inQ; }
+          } else if(ch===',' && !inQ){ out.push(cur); cur=''; }
+          else { cur+=ch; }
+        } out.push(cur); return out.map(s=>s.trim());
+      };
+      const header = parseLine(lines[0]).map(h=>h.toLowerCase().trim());
+      for(let i=1;i<lines.length;i++){
+        const cols = parseLine(lines[i]);
+        const obj = { cuenta:'', tutor:'', horario:'', correo:'' };
+        for(let j=0;j<header.length && j<cols.length;j++){
+          const key = header[j]; if(obj.hasOwnProperty(key)) obj[key] = cols[j];
+        }
+        rows.push(obj);
+      }
+      return rows;
+    }
+
+    function prepareData(rows){
+      INDEX = buildIndex(rows);
+      DUPLICATES = duplicatesSet(rows);
+      // No mostramos conteo en pantalla para alumnos (solicitud explícita)
+      if(elEstado) elEstado.textContent = '';
+    }
+
+    async function loadData(){
+      // 1) JSON embebido en el HTML
+      const embedded = qs('#tutores-data');
+      if(embedded){
+        const rows = parseJSONSafe(embedded.textContent||'');
+        if(Array.isArray(rows)){ prepareData(rows); return; } else { if(elEstado) elEstado.textContent = ''; return; }
+      }
+
+      // 2) CSV por parámetro ?csv=
+      const csvUrl = getParam('csv');
+      if(csvUrl){
+        const text = await fetchText(csvUrl);
+        if(text){ const rows = csvToRows(text); prepareData(rows); return; }
+      }
+
+      // 3) JSON por parámetro ?data= o por defecto ./tutores.json
+      const dataUrl = getParam('data') || DATA_URL_DEFAULT;
+      const txt = await fetchText(dataUrl);
+      const arr = parseJSONSafe(txt||'');
+      if(Array.isArray(arr)){ prepareData(arr); return; }
+
+      // 4) Fallback de ejemplo (pequeño)
+      const TEST_ROWS = [
+        { cuenta:'2021001', tutor:'Mtra. Laura Hernández', horario:'Lun 10:00–12:00 · Mié 13:00–15:00', correo:'laura.hernandez@fi.uaemex.mx' },
+        { cuenta:'2021002', tutor:'Ing. Diego Ramírez',    horario:'Mar 09:00–11:00 · Jue 14:00–16:00',   correo:'diego.ramirez@fi.uaemex.mx' },
+        { cuenta:'2021003', tutor:'Mtro. Sofía Pérez',     horario:'Mié 08:00–10:00 · Vie 12:00–14:00', correo:'sofia.perez@fi.uaemex.mx' }
+      ];
+      prepareData(TEST_ROWS);
+    }
+
+    // =====================
+    //  EVENTOS DE UI
+    // =====================
+    elCuenta.addEventListener('input', () => {
+      const pos = elCuenta.selectionStart; const cleaned = normCuenta(elCuenta.value).slice(0,7);
+      elCuenta.value = cleaned; elCuenta.setSelectionRange(Math.min(pos, cleaned.length), Math.min(pos, cleaned.length));
+    });
+
+    elForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const raw = elCuenta.value;
+      if(!isValidCuenta(raw)) { renderResult('invalid'); return; }
+      const cuenta = normCuenta(raw);
+      if(DUPLICATES.has(cuenta)) { renderResult('duplicate'); return; }
+      const row = INDEX?.get(cuenta);
+      if(!row) { renderResult('notfound'); return; }
+      renderResult('ok', row);
+    });
+
+    qs('#btn-limpiar').addEventListener('click', () => {
+      elCuenta.value = ''; elResult.className = 'result'; elResult.innerHTML = ''; elCuenta.focus();
+    });
+
+    // =====================
+    //  SELF-TESTS (se muestran con #debug)
+    // =====================
+    function assert(name, condition){ return { name, ok: !!condition }; }
+
+    function runTests(){
+      const results = [];
+      results.push(assert('normCuenta quita no dígitos', normCuenta('20 21-001') === '2021001'));
+      results.push(assert('teamsLink incluye users', /users=/.test(teamsLink('user@example.com')||'')));
+      const idxA = buildIndex([{cuenta:'1234567', tutor:'A', horario:'', correo:'a@b.com'},{cuenta:' 123-4567 ', tutor:'B', horario:'', correo:'b@c.com'}]);
+      results.push(assert('buildIndex normaliza y desduplica', idxA.has('1234567') && idxA.size===1));
+      const idxB = buildIndex([{cuenta:'2021002', tutor:'X', horario:'', correo:'x@y.com'}]);
+      results.push(assert('lookup devuelve registro', idxB.get('2021002')?.tutor==='X'));
+      const bom = '\\uFEFF'+JSON.stringify([{cuenta:'7654321', tutor:'T', horario:'', correo:'t@e.com'}]);
+      results.push(assert('parseJSONSafe elimina BOM', Array.isArray(parseJSONSafe(bom))));
+      results.push(assert('isValidCuenta exige 7 dígitos', isValidCuenta('1234567') && !isValidCuenta('123456') && !isValidCuenta('12345678')));
+      const dups = duplicatesSet([{cuenta:'3333333'},{cuenta:'3333333'},{cuenta:'4444444'}]);
+      results.push(assert('duplicates detecta duplicado', dups.has('3333333') && !dups.has('4444444')));
+      // CSV parser
+      const csv1 = 'cuenta,tutor,horario,correo\n2021001,Nombre,Hor,correo@x.com';
+      const r1 = csvToRows(csv1); const i1 = buildIndex(r1);
+      results.push(assert('csvToRows básico', Array.isArray(r1) && i1.has('2021001')));
+      const csv2 = 'cuenta,tutor,horario,correo\n2021002,"Nombre, Apell", "Lun 10:00–11:00; Remoto", correo@y.com';
+      const r2 = csvToRows(csv2); const i2 = buildIndex(r2);
+      results.push(assert('csvToRows con comillas y comas', i2.has('2021002')));
+
+      const okCount = results.filter(r=>r.ok).length; const allOk = okCount === results.length;
+      return { results, okCount, total: results.length, allOk };
+    }
+
+    function maybeShowDebug(){
+      if(!location.hash.includes('debug')) return;
+      const t = runTests();
+      let html = `<h3>Diagnóstico</h3>`;
+      html += `<p class="hint">Protocolo: <code>${escapeHtml(location.protocol)}</code> · Hash: <code>${escapeHtml(location.hash)}</code></p>`;
+      html += `<p>${t.okCount}/${t.total} tests OK ${t.allOk? '✅' : '❌'}</p>`;
+      html += '<ul>' + t.results.map(r => `<li>${r.ok? '✅' : '❌'} ${escapeHtml(r.name)}</li>`).join('') + '</ul>';
+      elDebug.innerHTML = html; elDebug.className = 'debug visible';
+    }
+
+    // =====================
+    //  INICIO
+    // =====================
+    (async function init(){
+      if(location.protocol === 'file:'){
+        // Mensaje técnico solo si se abre como file:// (no afecta a alumnos en producción)
+        if(elEstado) elEstado.innerHTML = `<span class="hint">Sugerencia:</span> Si usarás archivo externo, sirve el sitio por HTTP (p.ej., <code>python -m http.server 5500</code>) o incrusta el JSON en <code>&lt;script id=\"tutores-data\" type=\"application/json\"&gt;</code>.`;
+      } else {
+        if(elEstado) elEstado.textContent = '';
+      }
+      await loadData(); maybeShowDebug();
+    })();
+  </script>
+</body>
+</html>
