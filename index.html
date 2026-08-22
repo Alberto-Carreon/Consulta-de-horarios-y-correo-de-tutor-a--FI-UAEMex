@@ -174,7 +174,6 @@
 
     <p class="foot">
       Aviso: Para cambios o incidencias, contacta a la Coordinación de Tutoría Académica de la Facultad de Ingeniería.
-      WhatsApp: <a href="https://wa.me/527228959749" target="_blank" rel="noopener">7228959749</a> ·
       MS Teams: <a href="https://teams.microsoft.com/l/chat/0/0?users=tutoria_fi@uaemex.mx" target="_blank" rel="noopener">tutoria_fi@uaemex.mx</a>.
     </p>
   </main>
@@ -307,7 +306,7 @@
       if(DUPLICATES.has(cuenta)){
         elResult.className = 'result visible';
         elContacto.className = 'result';
-        elResult.innerHTML = `<p style="color:var(--danger);font-weight:950;">Se detectaron <strong>registros duplicados</strong> para este número de cuenta. Contacta a la Coordinación. WhatsApp: <a href="https://wa.me/527228959749" target="_blank" rel="noopener">7228959749</a>.</p>`;
+        elResult.innerHTML = `<p style="color:var(--danger);font-weight:950;">Se detectaron <strong>registros duplicados</strong> para este número de cuenta. Contacta a la Coordinación.</p>`;
         elContacto.innerHTML = '';
         return;
       }
@@ -316,7 +315,7 @@
       if(!row){
         elResult.className = 'result visible';
         elContacto.className = 'result';
-        elResult.innerHTML = `<p style="color:var(--danger);font-weight:950;">No se encontró el número de cuenta. Verifica que esté correcto o contacta a la Coordinación. WhatsApp: <a href="https://wa.me/527228959749" target="_blank" rel="noopener">7228959749</a>.</p>`;
+        elResult.innerHTML = `<p style="color:var(--danger);font-weight:950;">No se encontró el número de cuenta. Verifica que esté correcto o contacta a la Coordinación.</p>`;
         elContacto.innerHTML = '';
         return;
       }
